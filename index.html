@@ -3,208 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>阿秋私人下载站</title>
+    <title>📁 阿秋的下载站</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei",sans-serif}
-        body{background:#f7f8fa;padding:20px;max-width:1000px;margin:0 auto}
-        .container{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        body{background:#f5f7fa;padding:20px;max-width:900px;margin:0 auto}
+        .box{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px #00000008}
         h1{text-align:center;color:#333;margin-bottom:20px;font-size:24px}
-        .login{text-align:center;margin-bottom:20px}
-        .login input{padding:10px;border:1px solid #ddd;border-radius:6px;width:200px}
-        .login button{padding:10px 16px;background:#409eff;color:#fff;border:none;border-radius:6px;margin-left:6px;cursor:pointer}
-        .admin{background:#e8f4ff;padding:20px;border-radius:8px;margin-bottom:20px;display:none}
-        .admin h3{margin-bottom:10px;color:#0066cc}
-        .admin input, .admin select{width:100%;padding:10px;margin:6px 0;border:1px solid #ddd;border-radius:6px}
-        .admin button{background:#67c23a;color:#fff;border:none;padding:10px;border-radius:6px;width:100%;cursor:pointer;margin:4px 0}
-        .cate-set{border-top:1px solid #ccc;margin-top:15px;padding-top:15px}
-        .category{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-        .category button{padding:8px 14px;background:#f1f1f1;border:none;border-radius:6px;cursor:pointer}
-        .category button.active{background:#409eff;color:#fff}
-        .file-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9f9f9;border-radius:8px;margin:8px 0}
-        .file-name{flex:1}
-        .down-btn{padding:6px 12px;background:#409eff;color:#fff;border-radius:4px;text-decoration:none}
-        .del-btn{padding:6px 12px;background:#f56c6c;color:#fff;border:none;border-radius:4px;margin-left:6px;cursor:pointer}
+        .cate{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
+        .cate button{padding:8px 14px;border:none;border-radius:6px;background:#f1f1f1;cursor:pointer}
+        .cate button.active{background:#007bff;color:#fff}
+        .item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9f9f9;border-radius:8px;margin:8px 0}
+        .down{padding:6px 12px;background:#007bff;color:#fff;border-radius:4px;text-decoration:none}
         .empty{text-align:center;color:#999;padding:30px}
-        .tip{text-align:center;color:#666;margin:10px 0}
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>📁 阿秋私人下载站</h1>
+<div class="box">
+    <h1>📁 阿秋的下载站</h1>
 
-    <div class="login">
-        <input type="password" id="pwd" placeholder="输入管理密码">
-        <button onclick="login()">登录管理</button>
+    <div class="cate">
+        <button class="active" onclick="show('all')">全部</button>
+        <button onclick="show('软件')">软件</button>
+        <button onclick="show('文档')">文档</button>
+        <button onclick="show('视频')">视频</button>
+        <button onclick="show('图片')">图片</button>
     </div>
 
-    <div class="admin" id="adminPanel">
-        <h3>✅ 文件管理</h3>
-        <select id="fileCate"></select>
-        <input type="text" id="fileName" placeholder="文件名称">
-        <input type="url" id="fileUrl" placeholder="下载链接">
-        <button onclick="addFile()">添加文件</button>
-
-        <div class="cate-set">
-            <h4>分类管理</h4>
-            <input type="text" id="newCate" placeholder="新增分类">
-            <button onclick="addCate()">新增</button>
-            <input type="text" id="oldCate" placeholder="原分类名">
-            <input type="text" id="newCateName" placeholder="新分类名">
-            <button onclick="editCate()">修改分类</button>
-            <input type="text" id="delCate" placeholder="删除分类">
-            <button onclick="deleteCate()">删除</button>
-        </div>
-    </div>
-
-    <div class="category" id="cateWrap">
-        <button class="active" onclick="showCate('all')">全部</button>
-    </div>
-
-    <div id="fileList">
-        <div class="empty">加载中...</div>
-    </div>
-
-    <div class="tip">© 2026 阿秋下载站 - 所有设备同步</div>
+    <div id="list"></div>
 </div>
 
 <script>
-// ====================== 配置已填好 ======================
-const PASSWORD = "123456";
-const JSON_URL = "https://1829798478.share.123865.com/123pan/Kk8ejv-IV5wH";
-const SHARE_PWD = "admin@123";
-// ======================================================
+// ==============================================
+// ============ 所有文件都写在这里 ===============
+// ========= 增删文件直接改这里即可 =============
+// ==============================================
+const files = [
+  { cate: "视频", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
+];
 
-let isAdmin = false;
-let currentCate = "all";
-let cateList = ["软件", "文档", "视频", "图片", "其他"];
-let fileList = [];
+let current = "all";
 
-window.onload = async () => {
-    await loadCloudData();
-};
+// 渲染页面
+function render() {
+  let el = document.getElementById("list");
+  let data = current === "all" ? files : files.filter(i => i.cate === current);
+  
+  if (data.length === 0) {
+    el.innerHTML = "<div class='empty'>暂无文件</div>";
+    return;
+  }
 
-// 从 123云盘 加载数据
-async function loadCloudData() {
-    try {
-        let res = await fetch(`https://lz.qaiu.top/json/pan123/Kk8ejv-IV5wH@admin@123`);
-        let j = await res.json();
-        let realUrl = j.data.directLink;
-
-        let dataRes = await fetch(realUrl);
-        let data = await dataRes.json();
-
-        cateList = data.cate || ["软件","文档","视频","图片","其他"];
-        fileList = data.files || [];
-
-        renderAll();
-    } catch (e) {
-        document.getElementById("fileList").innerHTML = "<div class='empty'>加载失败</div>";
-    }
+  let html = "";
+  data.forEach(i => {
+    html += `
+    <div class="item">
+      <div>${i.name}</div>
+      <div><a class="down" href="${i.url}" target="_blank">下载</a></div>
+    </div>`;
+  });
+  el.innerHTML = html;
 }
 
-function login() {
-    if (document.getElementById("pwd").value === PASSWORD) {
-        isAdmin = true;
-        document.getElementById("adminPanel").style.display = "block";
-        alert("✅ 登录成功");
-        renderAll();
-    } else {
-        alert("❌ 密码错误");
-    }
+// 切换分类
+function show(cate) {
+  current = cate;
+  render();
+  document.querySelectorAll(".cate button").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
 }
 
-function renderAll() {
-    renderCate();
-    renderFile();
-}
-
-function renderCate() {
-    let wrap = document.getElementById("cateWrap");
-    let sel = document.getElementById("fileCate");
-    wrap.innerHTML = `<button class="${currentCate=='all'?'active':''}" onclick="showCate('all')">全部</button>`;
-    sel.innerHTML = "";
-    cateList.forEach(c => {
-        wrap.innerHTML += `<button class="${currentCate==c?'active':''}" onclick="showCate('${c}')">${c}</button>`;
-        sel.innerHTML += `<option value="${c}">${c}</option>`;
-    });
-}
-
-function renderFile() {
-    let list = document.getElementById("fileList");
-    let data = currentCate == "all" ? fileList : fileList.filter(f => f.cate == currentCate);
-    if (data.length === 0) {
-        list.innerHTML = "<div class='empty'>暂无文件</div>";
-        return;
-    }
-    let html = "";
-    data.forEach((item, i) => {
-        html += `
-        <div class="file-item">
-            <div class="file-name">${item.name}</div>
-            <div>
-                <a class="down-btn" href="${item.url}" target="_blank">下载</a>
-                ${isAdmin ? `<button class="del-btn" onclick="del(${i})">删除</button>` : ""}
-            </div>
-        </div>`;
-    });
-    list.innerHTML = html;
-}
-
-function showCate(c) {
-    currentCate = c;
-    renderAll();
-}
-
-// 操作后弹出最新JSON，你复制覆盖到123云盘data.json
-function showNewJSON() {
-    let txt = JSON.stringify({ cate: cateList, files: fileList }, null, 2);
-    alert("操作成功！复制以下内容覆盖 123云盘 的 data.json：\n\n" + txt);
-}
-
-function addFile() {
-    let cate = document.getElementById("fileCate").value;
-    let name = document.getElementById("fileName").value.trim();
-    let url = document.getElementById("fileUrl").value.trim();
-    if (!name || !url) return alert("请填写完整");
-    fileList.push({ cate, name, url });
-    showNewJSON();
-    renderFile();
-}
-
-function del(i) {
-    if (!isAdmin) return;
-    fileList.splice(i, 1);
-    showNewJSON();
-    renderFile();
-}
-
-function addCate() {
-    let name = document.getElementById("newCate").value.trim();
-    if (!name || cateList.includes(name)) return alert("名称无效或已存在");
-    cateList.push(name);
-    showNewJSON();
-    renderCate();
-}
-
-function editCate() {
-    let old = document.getElementById("oldCate").value.trim();
-    let now = document.getElementById("newCateName").value.trim();
-    if (!old || !now) return alert("请填写完整");
-    let idx = cateList.indexOf(old);
-    if (idx === -1) return alert("分类不存在");
-    cateList[idx] = now;
-    fileList.forEach(f => { if (f.cate == old) f.cate = now; });
-    showNewJSON();
-    renderAll();
-}
-
-function deleteCate() {
-    let name = document.getElementById("delCate").value.trim();
-    if (!name || !cateList.includes(name)) return alert("分类不存在");
-    cateList = cateList.filter(c => c != name);
-    showNewJSON();
-    renderCate();
-}
+// 初始化
+render();
 </script>
 </body>
 </html>
