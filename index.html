@@ -3,130 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件上传到 GitHub</title>
+    <title>自定义分类文件下载站</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
-        }
-        body {
-            max-width: 750px;
-            margin: 50px auto;
-            padding: 0 20px;
-            background: #f6f8fa;
-        }
-        .box {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #333;
-        }
-        .upload-area {
-            border: 2px dashed #0070f3;
-            padding: 35px 20px;
-            text-align: center;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-bottom: 25px;
-        }
-        #fileInput {
-            display: none;
-        }
-        .btn {
-            background: #0070f3;
-            color: white;
-            padding: 10px 22px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        .file-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            margin: 8px 0;
-        }
-        .down {
-            background: #0070f3;
-            color: white;
-            padding: 6px 14px;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-        .empty {
-            text-align: center;
-            color: #999;
-            padding: 25px;
-        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei",sans-serif}
+        body{background:#f7f8fa;padding:20px;max-width:1000px;margin:0 auto}
+        .container{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        h1{text-align:center;color:#333;margin-bottom:20px;font-size:24px}
+        .login{text-align:center;margin-bottom:20px}
+        .login input{padding:10px;border:1px solid #ddd;border-radius:6px;width:200px}
+        .login button{padding:10px 16px;background:#409eff;color:#fff;border:none;border-radius:6px;margin-left:6px;cursor:pointer}
+        .admin{background:#e8f4ff;padding:20px;border-radius:8px;margin-bottom:20px;display:none}
+        .admin h3{margin-bottom:10px;color:#0066cc}
+        .admin input, .admin select{width:100%;padding:10px;margin:6px 0;border:1px solid #ddd;border-radius:6px}
+        .admin button{background:#67c23a;color:#fff;border:none;padding:10px;border-radius:6px;width:100%;cursor:pointer;margin:4px 0}
+        .cate-set{border-top:1px solid #ccc;margin-top:15px;padding-top:15px}
+        .category{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+        .category button{padding:8px 14px;background:#f1f1f1;border:none;border-radius:6px;cursor:pointer}
+        .category button.active{background:#409eff;color:#fff}
+        .file-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9f9f9;border-radius:8px;margin:8px 0}
+        .file-name{flex:1}
+        .down-btn{padding:6px 12px;background:#409eff;color:#fff;border-radius:4px;text-decoration:none}
+        .del-btn{padding:6px 12px;background:#f56c6c;color:#fff;border:none;border-radius:4px;margin-left:6px;cursor:pointer}
+        .empty{text-align:center;color:#999;padding:30px}
+        .tip{text-align:center;color:#666;margin:10px 0}
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>📤 上传文件到 GitHub 仓库</h2>
+<div class="container">
+    <h1>📁 私人文件下载站</h1>
 
-        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-            <label class="btn" for="fileInput">选择文件上传</label>
-            <input type="file" id="fileInput" multiple>
-            <p>上传后自动保存到 GitHub，永久可下载</p>
-        </div>
+    <!-- 登录区域 -->
+    <div class="login">
+        <input type="password" id="pwd" placeholder="输入管理密码">
+        <button onclick="login()">登录管理</button>
+    </div>
 
-        <div id="fileList">
-            <div class="empty">加载文件列表...</div>
+    <!-- 管理员后台 -->
+    <div class="admin" id="adminPanel">
+        <h3>✅ 文件管理</h3>
+        <select id="fileCate">
+        </select>
+        <input type="text" id="fileName" placeholder="输入文件名称">
+        <input type="url" id="fileUrl" placeholder="粘贴文件下载链接">
+        <button onclick="addFile()">添加文件</button>
+
+        <!-- 自定义分类区域 -->
+        <div class="cate-set">
+            <h4>自定义分类管理</h4>
+            <input type="text" id="newCateName" placeholder="输入新分类名称">
+            <button onclick="addCategory()">新增分类</button>
+            <input type="text" id="editOldCate" placeholder="原分类名">
+            <input type="text" id="editNewCate" placeholder="修改为新名称">
+            <button onclick="editCategory()">修改分类</button>
+            <input type="text" id="delCateName" placeholder="要删除的分类名">
+            <button onclick="deleteCategory()">删除分类</button>
         </div>
     </div>
 
+    <!-- 分类筛选栏 -->
+    <div class="category" id="cateBox">
+        <button class="active" onclick="switchCate('all')">全部</button>
+    </div>
+
+    <!-- 文件列表 -->
+    <div id="fileList" class="empty">暂无文件</div>
+    <div class="tip">仅管理员可添加修改内容</div>
+</div>
+
 <script>
-const list = document.getElementById('fileList');
+// 基础配置
+const ADMIN_PWD = "123456";
+let isAdmin = false;
+let nowCate = "all";
 
-// 加载仓库里的所有文件
-async function loadFiles() {
-    try {
-        const res = await fetch("https://api.github.com/repos/aqiu051023/aqiu-download/contents/");
-        const data = await res.json();
-        if (!Array.isArray(data)) {
-            list.innerHTML = '<div class="empty">暂无文件</div>';
-            return;
-        }
+// 读取本地数据
+let categoryList = JSON.parse(localStorage.getItem("userCateList")) || ["软件","文档","视频","图片","其他"];
+let fileData = JSON.parse(localStorage.getItem("userFileData")) || [];
 
-        let html = '';
-        data.forEach(file => {
-            if (file.name === "index.html") return;
-            html += `
-            <div class="file-item">
-                <span>${file.name}</span>
-                <a class="down" href="${file.download_url}" target="_blank">下载</a>
-            </div>`;
-        });
-        list.innerHTML = html;
-    } catch (e) {
-        list.innerHTML = '<div class="empty">加载失败</div>';
+// 初始化渲染
+window.onload = function(){
+    renderCateSelect();
+    renderCateBtn();
+    renderFileList();
+}
+
+// 登录验证
+function login(){
+    let pwd = document.getElementById("pwd").value;
+    if(pwd === ADMIN_PWD){
+        isAdmin = true;
+        document.getElementById("adminPanel").style.display = "block";
+        alert("登录成功，已开启管理权限");
+        renderFileList();
+    }else{
+        alert("密码错误");
     }
 }
 
-// 上传文件
-document.getElementById('fileInput').addEventListener('change', async e => {
-    const files = Array.from(e.target.files);
-    for (const f of files) {
-        const form = new FormData();
-        form.append('file', f);
-        await fetch('/api/upload', { method: 'POST', body: form });
-    }
-    alert("上传成功！页面将刷新");
-    location.reload();
-});
+// 渲染添加文件下拉分类
+function renderCateSelect(){
+    let sel = document.getElementById("fileCate");
+    sel.innerHTML = "";
+    categoryList.forEach(item=>{
+        sel.innerHTML += `<option value="${item}">${item}</option>`;
+    })
+}
 
-loadFiles();
+// 渲染顶部分类切换按钮
+function renderCateBtn(){
+    let box = document.getElementById("cateBox");
+    let html = `<button class="${nowCate==='all'?'active':''}" onclick="switchCate('all')">全部</button>`;
+    categoryList.forEach(item=>{
+        html += `<button class="${nowCate===item?'active':''}" onclick="switchCate('${item}')">${item}</button>`;
+    })
+    box.innerHTML = html;
+}
+
+// 切换分类筛选
+function switchCate(name){
+    nowCate = name;
+    renderCateBtn();
+    renderFileList();
+}
+
+// 新增自定义分类
+function addCategory(){
+    let name = document.getElementById("newCateName").value.trim();
+    if(!name) return alert("请输入分类名称");
+    if(categoryList.includes(name)) return alert("该分类已存在");
+    categoryList.push(name);
+    localStorage.setItem("userCateList",JSON.stringify(categoryList));
+    renderCateSelect();
+    renderCateBtn();
+    document.getElementById("newCateName").value = "";
+    alert("分类新增成功");
+}
+
+// 修改分类名称
+function editCategory(){
+    let oldName = document.getElementById("editOldCate").value.trim();
+    let newName = document.getElementById("editNewCate").value.trim();
+    if(!oldName||!newName) return alert("请填写完整名称");
+    let idx = categoryList.indexOf(oldName);
+    if(idx === -1) return alert("未找到该分类");
+    categoryList[idx] = newName;
+    // 同步修改已有文件分类
+    fileData.forEach(item=>{
+        if(item.cate === oldName) item.cate = newName;
+    })
+    localStorage.setItem("userCateList",JSON.stringify(categoryList));
+    localStorage.setItem("userFileData",JSON.stringify(fileData));
+    renderCateSelect();
+    renderCateBtn();
+    renderFileList();
+    document.getElementById("editOldCate").value = "";
+    document.getElementById("editNewCate").value = "";
+    alert("分类修改成功");
+}
+
+// 删除分类
+function deleteCategory(){
+    let delName = document.getElementById("delCateName").value.trim();
+    if(!delName) return alert("输入要删除的分类名");
+    if(!categoryList.includes(delName)) return alert("分类不存在");
+    if(confirm(`确定删除【${delName}】分类？关联文件会保留`)){
+        categoryList = categoryList.filter(v=>v!==delName);
+        localStorage.setItem("userCateList",JSON.stringify(categoryList));
+        renderCateSelect();
+        renderCateBtn();
+        document.getElementById("delCateName").value = "";
+        alert("分类删除成功");
+    }
+}
+
+// 添加文件
+function addFile(){
+    let cate = document.getElementById("fileCate").value;
+    let fname = document.getElementById("fileName").value.trim();
+    let furl = document.getElementById("fileUrl").value.trim();
+    if(!fname||!furl) return alert("文件名和链接不能为空");
+    fileData.push({
+        category:cate,
+        name:fname,
+        link:furl
+    })
+    localStorage.setItem("userFileData",JSON.stringify(fileData));
+    document.getElementById("fileName").value = "";
+    document.getElementById("fileUrl").value = "";
+    renderFileList();
+    alert("文件添加成功");
+}
+
+// 删除文件
+window.delFile = function(index){
+    if(!isAdmin) return;
+    fileData.splice(index,1);
+    localStorage.setItem("userFileData",JSON.stringify(fileData));
+    renderFileList();
+}
+
+// 渲染文件列表
+function renderFileList(){
+    let listBox = document.getElementById("fileList");
+    let showArr = nowCate === "all" ? fileData : fileData.filter(v=>v.category===nowCate);
+    if(showArr.length === 0){
+        listBox.innerHTML = `<div class="empty">暂无相关文件</div>`;
+        return;
+    }
+    let html = "";
+    showArr.forEach((item,idx)=>{
+        html += `
+        <div class="file-item">
+            <div class="file-name">${item.name}</div>
+            <div>
+                <a class="down-btn" href="${item.link}" target="_blank">下载</a>
+                ${isAdmin?`<button class="del-btn" onclick="delFile(${fileData.indexOf(item)})">删除</button>`:""}
+            </div>
+        </div>
+        `
+    })
+    listBox.innerHTML = html;
+}
 </script>
 </body>
 </html>
