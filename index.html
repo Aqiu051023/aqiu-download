@@ -3,104 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>私人文件下载站</title>
+    <title>文件上传到 GitHub</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei"}
-        body{background:#f7f8fa;padding:30px;max-width:800px;margin:0 auto}
-        .box{background:#fff;padding:30px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
-        h2{text-align:center;margin-bottom:25px;color:#333}
-        .login{text-align:center;margin-bottom:20px}
-        #pwd{padding:10px 15px;width:220px;border:1px solid #ddd;border-radius:6px;outline:0}
-        #loginBtn{padding:10px 20px;background:#409eff;color:#fff;border:0;border-radius:6px;margin-left:6px;cursor:pointer}
-        .admin{display:none;margin:20px 0;padding:20px;border:2px dashed #409eff;border-radius:8px;text-align:center}
-        input{padding:8px;margin:5px;width:220px;border:1px solid #ddd;border-radius:6px}
-        .addBtn{background:#67c23a;color:#fff;padding:8px 16px;border:0;border-radius:6px;cursor:pointer}
-        .file{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9f9f9;border-radius:8px;margin:8px 0}
-        .down{background:#409eff;color:#fff;padding:6px 14px;text-decoration:none;border-radius:4px}
-        .del{background:#f56c6c;color:#fff;padding:6px 14px;border:0;border-radius:4px;margin-left:6px;cursor:pointer}
-        .empty{text-align:center;color:#999;padding:20px}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            max-width: 750px;
+            margin: 50px auto;
+            padding: 0 20px;
+            background: #f6f8fa;
+        }
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        .upload-area {
+            border: 2px dashed #0070f3;
+            padding: 35px 20px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 25px;
+        }
+        #fileInput {
+            display: none;
+        }
+        .btn {
+            background: #0070f3;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .down {
+            background: #0070f3;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .empty {
+            text-align: center;
+            color: #999;
+            padding: 25px;
+        }
     </style>
 </head>
 <body>
-<div class="box">
-    <h2>私人文件下载站</h2>
+    <div class="box">
+        <h2>📤 上传文件到 GitHub 仓库</h2>
 
-    <div class="login">
-        <input type="password" id="pwd" placeholder="输入管理密码">
-        <button id="loginBtn">登录管理</button>
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <label class="btn" for="fileInput">选择文件上传</label>
+            <input type="file" id="fileInput" multiple>
+            <p>上传后自动保存到 GitHub，永久可下载</p>
+        </div>
+
+        <div id="fileList">
+            <div class="empty">加载文件列表...</div>
+        </div>
     </div>
-
-    <div class="admin" id="adminPanel">
-        <h4>✅ 添加下载文件（支持任意大小）</h4>
-        <input type="text" id="fname" placeholder="文件名：如 软件.exe"><br>
-        <input type="url" id="furl" placeholder="下载直链"><br>
-        <button class="addBtn" onclick="addFile()">添加文件</button>
-    </div>
-
-    <div id="fileList"></div>
-</div>
 
 <script>
-// ==================== 你的密码 ====================
-const PASSWORD = "123456";
-// ==================================================
+const list = document.getElementById('fileList');
 
-let isAdmin = false;
-let files = JSON.parse(localStorage.getItem("file_list")) || [];
+// 加载仓库里的所有文件
+async function loadFiles() {
+    try {
+        const res = await fetch("https://api.github.com/repos/aqiu051023/aqiu-download/contents/");
+        const data = await res.json();
+        if (!Array.isArray(data)) {
+            list.innerHTML = '<div class="empty">暂无文件</div>';
+            return;
+        }
 
-// 渲染列表
-function render() {
-    let el = document.getElementById("fileList");
-    if (files.length === 0) {
-        el.innerHTML = "<div class='empty'>暂无文件</div>";
-        return;
-    }
-    let html = "";
-    files.forEach((item, i) => {
-        html += `
-        <div class="file">
-            <span>${item.name}</span>
-            <div>
-                <a class="down" href="${item.url}" target="_blank">下载</a>
-                ${isAdmin ? '<button class="del" onclick="del('+i+')">删除</button>' : ''}
-            </div>
-        </div>`;
-    });
-    el.innerHTML = html;
-}
-
-// 添加文件
-function addFile() {
-    let name = document.getElementById("fname").value;
-    let url = document.getElementById("furl").value;
-    if (!name || !url) return alert("请填写完整！");
-    files.push({ name, url });
-    localStorage.setItem("file_list", JSON.stringify(files));
-    document.getElementById("fname").value = "";
-    document.getElementById("furl").value = "";
-    render();
-}
-
-// 删除文件
-window.del = (i) => {
-    files.splice(i, 1);
-    localStorage.setItem("file_list", JSON.stringify(files));
-    render();
-}
-
-// 登录
-document.getElementById("loginBtn").onclick = () => {
-    if (document.getElementById("pwd").value === PASSWORD) {
-        isAdmin = true;
-        document.getElementById("adminPanel").style.display = "block";
-        alert("✅ 登录成功！");
-        render();
-    } else {
-        alert("❌ 密码错误");
+        let html = '';
+        data.forEach(file => {
+            if (file.name === "index.html") return;
+            html += `
+            <div class="file-item">
+                <span>${file.name}</span>
+                <a class="down" href="${file.download_url}" target="_blank">下载</a>
+            </div>`;
+        });
+        list.innerHTML = html;
+    } catch (e) {
+        list.innerHTML = '<div class="empty">加载失败</div>';
     }
 }
 
-render();
+// 上传文件
+document.getElementById('fileInput').addEventListener('change', async e => {
+    const files = Array.from(e.target.files);
+    for (const f of files) {
+        const form = new FormData();
+        form.append('file', f);
+        await fetch('/api/upload', { method: 'POST', body: form });
+    }
+    alert("上传成功！页面将刷新");
+    location.reload();
+});
+
+loadFiles();
 </script>
 </body>
 </html>
