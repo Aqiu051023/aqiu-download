@@ -10,7 +10,6 @@
         .box{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
         h1{text-align:center;color:#333;margin-bottom:20px;font-size:24px}
         
-        /* 下拉框 + 搜索框 布局 */
         .tool-group{
             display:flex;
             gap:12px;
@@ -43,7 +42,6 @@
             white-space:nowrap;
         }
 
-        /* 搜索框样式 */
         .search-group{
             display:flex;
             gap:6px;
@@ -67,8 +65,15 @@
             border-radius:6px;
             cursor:pointer;
             white-space:nowrap;
+            transition: all 0.2s;
         }
         .search-btn:hover{background:#0056b3}
+        .search-btn.back{
+            background:#28a745;
+        }
+        .search-btn.back:hover{
+            background:#218838;
+        }
 
         .item{
             display:flex;
@@ -95,7 +100,6 @@
 <div class="box">
     <h1>📁 阿秋的下载站</h1>
 
-    <!-- 分类 + 搜索 工具栏 -->
     <div class="tool-group">
         <div class="select-item">
             <span class="label">主分类：</span>
@@ -116,7 +120,6 @@
             </select>
         </div>
 
-        <!-- 搜索框 -->
         <div class="search-group">
             <input type="text" id="searchInput" class="search-input" placeholder="搜索名称...">
             <button class="search-btn" id="searchBtn">搜索</button>
@@ -127,33 +130,20 @@
 </div>
 
 <script>
-// ==============================================
-// 极简拼音搜索（修复版，无语法错误）
-// ==============================================
 const pinyin = {
-    // 简单首字母映射（覆盖常用汉字，够用）
     firstLetterMap: {
         "2":"2","5":"5","b":"b","l":"l","a":"a","c":"c","m":"m","L":"L","U":"U","T":"T","包":"b","标":"b","部":"b","工":"g","业":"y","大":"d","数":"s","据":"j","黑":"h","白":"b","魔":"m","方":"f","摄":"s","影":"y","滤":"l","镜":"j","教":"j","程":"c","资":"z","料":"l","学":"x","校":"x","视":"s","频":"p","软":"r","件":"j","文":"w","档":"d","图":"t","片":"p"
     },
-    // 获取首字母（纯中文）
     getFirst(str) {
-        return str.split("").map(c => {
-            return this.firstLetterMap[c] || c;
-        }).join("");
+        return str.split("").map(c => this.firstLetterMap[c] || c).join("");
     }
 };
 
-// ==============================================
-// ========= 资源列表：支持 cate + subCate ======
-// ==============================================
 const files = [
-  // 视频类
   { cate: "视频", subCate: "学校", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
-  // 摄影类
   { cate: "摄影", subCate: "滤镜", name: "blackmagic cam LUT包", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-V6fwH" }  
 ];
 
-// 子分类配置
 const subMap = {
   "软件": [],
   "文档": [],
@@ -163,14 +153,15 @@ const subMap = {
   "all": []
 };
 
-// DOM
 const mainEl = document.getElementById("mainCate");
 const subEl = document.getElementById("subCate");
 const listEl = document.getElementById("list");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 
-// 加载子分类
+// 状态标记
+let isSearchMode = false;
+
 function loadSub(main) {
   const subs = subMap[main] || [];
   if (subs.length === 0) {
@@ -184,39 +175,39 @@ function loadSub(main) {
   subEl.innerHTML = opt;
 }
 
-// 重置子分类
 function resetSub() {
   subEl.innerHTML = `<option value="">请先选择主分类</option>`;
   subEl.disabled = true;
 }
 
-// 核心渲染 + 搜索
-function render() {
+// 正常分类渲染
+function renderByCate() {
+  let data = [...files];
   const main = mainEl.value;
   const sub = subEl.value;
-  const keyword = searchInput.value.trim().toLowerCase();
+  if (main !== "all") data = data.filter(i => i.cate === main);
+  if (sub) data = data.filter(i => i.subCate === sub);
+  renderList(data);
+}
 
+// 搜索渲染
+function renderBySearch() {
   let data = [...files];
+  const kw = searchInput.value.trim().toLowerCase();
+  data = data.filter(item => {
+    const name = item.name.toLowerCase();
+    const firstPy = pinyin.getFirst(item.name).toLowerCase();
+    return name.includes(kw) || firstPy.includes(kw);
+  });
+  renderList(data);
+}
 
-  // 搜索优先
-  if (keyword) {
-    data = data.filter(item => {
-      const name = item.name.toLowerCase();
-      const firstPinyin = pinyin.getFirst(item.name).toLowerCase();
-      return name.includes(keyword) || firstPinyin.includes(keyword);
-    });
-  } else {
-    // 分类筛选
-    if (main !== "all") data = data.filter(i => i.cate === main);
-    if (sub) data = data.filter(i => i.subCate === sub);
-  }
-
-  // 渲染列表
+// 渲染列表
+function renderList(data) {
   if (data.length === 0) {
     listEl.innerHTML = "<div class='empty'>暂无文件</div>";
     return;
   }
-
   let html = "";
   data.forEach(i => {
     html += `
@@ -228,41 +219,65 @@ function render() {
   listEl.innerHTML = html;
 }
 
-// 绑定事件
 function bindEvent() {
   // 主分类切换
   mainEl.addEventListener("change", () => {
     resetSub();
     loadSub(mainEl.value);
-    render();
+    if(!isSearchMode) renderByCate();
   });
-
   // 子分类切换
-  subEl.addEventListener("change", render);
+  subEl.addEventListener("change", () => {
+    if(!isSearchMode) renderByCate();
+  });
 
-  // 搜索框聚焦 → 禁用分类
+  // 搜索框聚焦：禁用分类
   searchInput.addEventListener("focus", () => {
-    mainEl.disabled = true;
-    subEl.disabled = true;
+    if(!isSearchMode){
+        mainEl.disabled = true;
+        subEl.disabled = true;
+    }
+  });
+  // 失去焦点：恢复分类
+  searchInput.addEventListener("blur", () => {
+    if(!isSearchMode){
+        mainEl.disabled = false;
+        loadSub(mainEl.value);
+    }
   });
 
-  // 搜索按钮点击
+  // 按钮点击
   searchBtn.addEventListener("click", () => {
-    render();
-    searchInput.value = ""; // 搜索后清空
-    mainEl.disabled = false; // 恢复分类
-    loadSub(mainEl.value);
+    if(!isSearchMode){
+        // 进入搜索模式
+        isSearchMode = true;
+        mainEl.disabled = true;
+        subEl.disabled = true;
+        searchBtn.classList.add("back");
+        searchBtn.innerText = "返回";
+        renderBySearch();
+    }else{
+        // 返回正常模式
+        isSearchMode = false;
+        searchBtn.classList.remove("back");
+        searchBtn.innerText = "搜索";
+        mainEl.disabled = false;
+        loadSub(mainEl.value);
+        renderByCate();
+    }
   });
 
-  // 回车搜索
+  // 回车触发搜索
   searchInput.addEventListener("keyup", e => {
-    if (e.key === "Enter") searchBtn.click();
+    if(e.key === "Enter" && !isSearchMode){
+        searchBtn.click();
+    }
   });
 }
 
-// 初始化：先绑定事件，再渲染
+// 初始化
 bindEvent();
-render();
+renderByCate();
 </script>
 </body>
 </html>
