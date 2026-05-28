@@ -7,13 +7,15 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei",sans-serif}
         body{background:#f5f7fa;padding:20px;max-width:900px;margin:0 auto}
-        .box{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px #00000008}
+        .box{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
         h1{text-align:center;color:#333;margin-bottom:20px;font-size:24px}
         .cate{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
-        .cate button{padding:8px 14px;border:none;border-radius:6px;background:#f1f1f1;cursor:pointer}
+        .cate button{padding:8px 14px;border:none;border-radius:6px;background:#f1f1f1;cursor:pointer;transition:0.2s}
+        .cate button:hover{background:#e1e1e1}
         .cate button.active{background:#007bff;color:#fff}
         .item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9f9f9;border-radius:8px;margin:8px 0}
-        .down{padding:6px 12px;background:#007bff;color:#fff;border-radius:4px;text-decoration:none}
+        .down{padding:6px 12px;background:#007bff;color:#fff;border-radius:4px;text-decoration:none;transition:0.2s}
+        .down:hover{background:#0056b3}
         .empty{text-align:center;color:#999;padding:30px}
     </style>
 </head>
@@ -22,11 +24,11 @@
     <h1>📁 阿秋的下载站</h1>
 
     <div class="cate">
-        <button class="active" onclick="show('all')">全部</button>
-        <button onclick="show('软件')">软件</button>
-        <button onclick="show('文档')">文档</button>
-        <button onclick="show('视频')">视频</button>
-        <button onclick="show('图片')">图片</button>
+        <button class="active" onclick="show('all', this)">全部</button>
+        <button onclick="show('软件', this)">软件</button>
+        <button onclick="show('文档', this)">文档</button>
+        <button onclick="show('视频', this)">视频</button>
+        <button onclick="show('图片', this)">图片</button>
     </div>
 
     <div id="list"></div>
@@ -39,6 +41,8 @@
 // ==============================================
 const files = [
   { cate: "视频", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
+  // 往下复制格式就能添加更多文件
+  // { cate: "软件", name: "XXX工具", url: "下载链接" },
 ];
 
 let current = "all";
@@ -64,16 +68,15 @@ function render() {
   el.innerHTML = html;
 }
 
-// 切换分类
-function show(cate) {
+// 切换分类（修复了按钮高亮bug）
+function show(cate, btn) {
   current = cate;
   render();
   document.querySelectorAll(".cate button").forEach(b => b.classList.remove("active"));
-  event.target.classList.add("active");
+  btn.classList.add("active");
 }
 
 // 初始化
 render();
 </script>
 </body>
-</html>
