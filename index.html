@@ -101,9 +101,20 @@
     <h1>📁 阿秋的下载站</h1>
 
     <div class="tool-group">
+        <!-- 下载源选择（必选） -->
+        <div class="select-item">
+            <span class="label">下载源：</span>
+            <select id="source">
+                <option value="">请选择源</option>
+                <option value="123">123网盘</option>
+                <option value="夸克">夸克网盘</option>
+                <option value="蓝奏云">蓝奏云</option>
+            </select>
+        </div>
+
         <div class="select-item">
             <span class="label">主分类：</span>
-            <select id="mainCate">
+            <select id="mainCate" disabled>
                 <option value="all">全部</option>
                 <option value="软件">软件</option>
                 <option value="文档">文档</option>
@@ -121,12 +132,14 @@
         </div>
 
         <div class="search-group">
-            <input type="text" id="searchInput" class="search-input" placeholder="搜索名称...">
-            <button class="search-btn" id="searchBtn">搜索</button>
+            <input type="text" id="searchInput" class="search-input" placeholder="搜索名称..." disabled>
+            <button class="search-btn" id="searchBtn" disabled>搜索</button>
         </div>
     </div>
 
-    <div id="list"></div>
+    <div id="list">
+        <div class="empty">请先选择下载源查看资源</div>
+    </div>
 </div>
 
 <script>
@@ -139,9 +152,13 @@ const pinyin = {
     }
 };
 
+// ==============================================
+// 每个文件增加 source 字段：123 / 夸克 / 蓝奏云
+// ==============================================
 const files = [
-  { cate: "视频", subCate: "学校", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
-  { cate: "摄影", subCate: "滤镜", name: "blackmagic cam LUT包", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-V6fwH" }  
+  { source: "123", cate: "视频", subCate: "学校", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
+    
+  { source: "夸克", cate: "摄影", subCate: "滤镜", name: "blackmagic cam LUT包", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-V6fwH" },
 ];
 
 const subMap = {
@@ -153,6 +170,7 @@ const subMap = {
   "all": []
 };
 
+const sourceEl = document.getElementById("source");
 const mainEl = document.getElementById("mainCate");
 const subEl = document.getElementById("subCate");
 const listEl = document.getElementById("list");
@@ -161,6 +179,7 @@ const searchBtn = document.getElementById("searchBtn");
 
 let isSearchMode = false;
 
+// 加载子分类
 function loadSub(main) {
   const subs = subMap[main] || [];
   if (subs.length === 0) {
@@ -174,36 +193,41 @@ function loadSub(main) {
   subEl.innerHTML = opt;
 }
 
+// 重置子分类
 function resetSub() {
   subEl.innerHTML = `<option value="">请先选择主分类</option>`;
   subEl.disabled = true;
 }
 
-function renderByCate() {
-  let data = [...files];
+// 统一渲染入口
+function render() {
+  const source = sourceEl.value;
+  if (!source) {
+    listEl.innerHTML = "<div class='empty'>请先选择下载源查看资源</div>";
+    return;
+  }
+
+  let data = files.filter(item => item.source === source);
   const main = mainEl.value;
   const sub = subEl.value;
-  if (main !== "all") data = data.filter(i => i.cate === main);
-  if (sub) data = data.filter(i => i.subCate === sub);
-  renderList(data);
-}
-
-function renderBySearch() {
-  let data = [...files];
   const kw = searchInput.value.trim().toLowerCase();
-  data = data.filter(item => {
-    const name = item.name.toLowerCase();
-    const firstPy = pinyin.getFirst(item.name).toLowerCase();
-    return name.includes(kw) || firstPy.includes(kw);
-  });
-  renderList(data);
-}
 
-function renderList(data) {
+  if (isSearchMode && kw) {
+    data = data.filter(item => {
+      const name = item.name.toLowerCase();
+      const firstPy = pinyin.getFirst(item.name).toLowerCase();
+      return name.includes(kw) || firstPy.includes(kw);
+    });
+  } else {
+    if (main !== "all") data = data.filter(i => i.cate === main);
+    if (sub) data = data.filter(i => i.subCate === sub);
+  }
+
   if (data.length === 0) {
     listEl.innerHTML = "<div class='empty'>暂无文件</div>";
     return;
   }
+
   let html = "";
   data.forEach(i => {
     html += `
@@ -215,61 +239,82 @@ function renderList(data) {
   listEl.innerHTML = html;
 }
 
+// 绑定所有事件
 function bindEvent() {
+  // 选择下载源 → 解锁所有功能
+  sourceEl.addEventListener("change", () => {
+    const source = sourceEl.value;
+    if (source) {
+      mainEl.disabled = false;
+      searchInput.disabled = false;
+      searchBtn.disabled = false;
+    } else {
+      mainEl.disabled = true;
+      subEl.disabled = true;
+      searchInput.disabled = true;
+      searchBtn.disabled = true;
+      searchInput.value = "";
+      isSearchMode = false;
+      searchBtn.classList.remove("back");
+      searchBtn.innerText = "搜索";
+    }
+    resetSub();
+    render();
+  });
+
+  // 主分类切换
   mainEl.addEventListener("change", () => {
     resetSub();
     loadSub(mainEl.value);
-    if(!isSearchMode) renderByCate();
+    render();
   });
 
-  subEl.addEventListener("change", () => {
-    if(!isSearchMode) renderByCate();
-  });
+  // 子分类切换
+  subEl.addEventListener("change", render);
 
+  // 搜索框聚焦禁用分类
   searchInput.addEventListener("focus", () => {
-    if(!isSearchMode){
-        mainEl.disabled = true;
-        subEl.disabled = true;
+    if (!isSearchMode) {
+      mainEl.disabled = true;
+      subEl.disabled = true;
     }
   });
 
+  // 失去焦点恢复分类
   searchInput.addEventListener("blur", () => {
-    if(!isSearchMode){
-        mainEl.disabled = false;
-        loadSub(mainEl.value);
+    if (!isSearchMode) {
+      mainEl.disabled = false;
+      loadSub(mainEl.value);
     }
   });
 
+  // 搜索 / 返回 按钮
   searchBtn.addEventListener("click", () => {
-    if(!isSearchMode){
-        isSearchMode = true;
-        mainEl.disabled = true;
-        subEl.disabled = true;
-        searchBtn.classList.add("back");
-        searchBtn.innerText = "返回";
-        renderBySearch();
-    }else{
-        // 返回时清空搜索框
-        searchInput.value = "";
-        
-        isSearchMode = false;
-        searchBtn.classList.remove("back");
-        searchBtn.innerText = "搜索";
-        mainEl.disabled = false;
-        loadSub(mainEl.value);
-        renderByCate();
+    if (!isSearchMode) {
+      isSearchMode = true;
+      mainEl.disabled = true;
+      subEl.disabled = true;
+      searchBtn.classList.add("back");
+      searchBtn.innerText = "返回";
+    } else {
+      searchInput.value = "";
+      isSearchMode = false;
+      searchBtn.classList.remove("back");
+      searchBtn.innerText = "搜索";
+      mainEl.disabled = false;
+      loadSub(mainEl.value);
     }
+    render();
   });
 
+  // 回车搜索
   searchInput.addEventListener("keyup", e => {
-    if(e.key === "Enter" && !isSearchMode){
-        searchBtn.click();
-    }
+    if (e.key === "Enter" && !isSearchMode) searchBtn.click();
   });
 }
 
 bindEvent();
-renderByCate();
+render();
 </script>
 </body>
 </html>
