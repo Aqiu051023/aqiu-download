@@ -9,12 +9,51 @@
         body{background:#f5f7fa;padding:20px;max-width:900px;margin:0 auto}
         .box{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
         h1{text-align:center;color:#333;margin-bottom:20px;font-size:24px}
-        .cate{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap}
-        .cate button{padding:8px 14px;border:none;border-radius:6px;background:#f1f1f1;cursor:pointer;transition:0.2s}
-        .cate button:hover{background:#e1e1e1}
-        .cate button.active{background:#007bff;color:#fff}
-        .item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9f9f9;border-radius:8px;margin:8px 0}
-        .down{padding:6px 12px;background:#007bff;color:#fff;border-radius:4px;text-decoration:none;transition:0.2s}
+        
+        /* 下拉框样式 */
+        .select-group{
+            display:flex;
+            gap:12px;
+            margin:20px 0;
+            flex-wrap:wrap;
+            align-items:center;
+        }
+        .select-group select{
+            padding:10px 14px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:14px;
+            outline:none;
+            cursor:pointer;
+            min-width:160px;
+        }
+        .select-group select:disabled{
+            background:#f5f5f5;
+            cursor:not-allowed;
+            color:#999;
+        }
+        .label{
+            font-size:14px;
+            color:#666;
+        }
+
+        .item{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:12px;
+            background:#f9f9f9;
+            border-radius:8px;
+            margin:8px 0
+        }
+        .down{
+            padding:6px 12px;
+            background:#007bff;
+            color:#fff;
+            border-radius:4px;
+            text-decoration:none;
+            transition:0.2s
+        }
         .down:hover{background:#0056b3}
         .empty{text-align:center;color:#999;padding:30px}
     </style>
@@ -23,12 +62,22 @@
 <div class="box">
     <h1>📁 阿秋的下载站</h1>
 
-    <div class="cate">
-        <button class="active" onclick="show('all', this)">全部</button>
-        <button onclick="show('软件', this)">软件</button>
-        <button onclick="show('文档', this)">文档</button>
-        <button onclick="show('视频', this)">视频</button>
-        <button onclick="show('图片', this)">图片</button>
+    <!-- 双下拉框：主分类 + 子分类 -->
+    <div class="select-group">
+        <span class="label">主分类：</span>
+        <select id="mainCate">
+            <option value="all">全部</option>
+            <option value="软件">软件</option>
+            <option value="文档">文档</option>
+            <option value="视频">视频</option>
+            <option value="图片">图片</option>
+            <option value="摄影">摄影</option>
+        </select>
+
+        <span class="label" id="subLabel">子分类：</span>
+        <select id="subCate" disabled>
+            <option value="">请先选择主分类</option>
+        </select>
     </div>
 
     <div id="list"></div>
@@ -36,24 +85,101 @@
 
 <script>
 // ==============================================
-// ============ 所有文件都写在这里 ===============
-// ========= 增删文件直接改这里即可 =============
+// ========= 资源列表：支持 cate + subCate ======
 // ==============================================
 const files = [
-  { cate: "视频", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
-  // 往下复制格式就能添加更多文件
-  // { cate: "软件", name: "XXX工具", url: "下载链接" },
+  // 软件类
+
+
+  // 文档类
+
+
+  // 视频类
+  { cate: "视频", subCate: "学校", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
+
+  // 图片类
+
+  // 摄影类
+    { cate: "摄影",subCate: "滤镜", name: "blackmagic cam LUT包", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-V6fwH"}  
 ];
 
-let current = "all";
+// 子分类配置
+const subMap = {
+  "软件": [],
+  "文档": [],
+  "视频": ["学校"],
+  "图片": [],
+  "摄影": ["滤镜"],  
+  "all": []
+};
 
-// 渲染页面
+// DOM
+const mainEl = document.getElementById("mainCate");
+const subEl = document.getElementById("subCate");
+const listEl = document.getElementById("list");
+const subLabel = document.getElementById("subLabel");
+
+// 初始化
+render();
+bindEvent();
+
+// 绑定事件
+function bindEvent() {
+  // 主分类切换
+  mainEl.addEventListener("change", () => {
+    const main = mainEl.value;
+    resetSub(); // 清空子分类
+    loadSub(main); // 加载子分类
+    render(); // 刷新列表
+  });
+
+  // 子分类切换
+  subEl.addEventListener("change", render);
+}
+
+// 加载子分类下拉框
+function loadSub(main) {
+  const subs = subMap[main] || [];
+  if (subs.length === 0) {
+    subEl.disabled = true;
+    subEl.innerHTML = `<option value="">无子分类</option>`;
+    return;
+  }
+
+  // 启用子分类
+  subEl.disabled = false;
+  let opt = `<option value="">全部${main}</option>`;
+  subs.forEach(s => {
+    opt += `<option value="${s}">${s}</option>`;
+  });
+  subEl.innerHTML = opt;
+}
+
+// 清空子分类
+function resetSub() {
+  subEl.innerHTML = `<option value="">请先选择主分类</option>`;
+  subEl.disabled = true;
+}
+
+// 渲染列表（核心筛选）
 function render() {
-  let el = document.getElementById("list");
-  let data = current === "all" ? files : files.filter(i => i.cate === current);
-  
+  const main = mainEl.value;
+  const sub = subEl.value;
+
+  let data = files;
+
+  // 主分类筛选
+  if (main !== "all") {
+    data = data.filter(i => i.cate === main);
+  }
+  // 子分类筛选（有值才生效）
+  if (sub) {
+    data = data.filter(i => i.subCate === sub);
+  }
+
+  // 渲染
   if (data.length === 0) {
-    el.innerHTML = "<div class='empty'>暂无文件</div>";
+    listEl.innerHTML = "<div class='empty'>暂无文件</div>";
     return;
   }
 
@@ -65,18 +191,8 @@ function render() {
       <div><a class="down" href="${i.url}" target="_blank">下载</a></div>
     </div>`;
   });
-  el.innerHTML = html;
+  listEl.innerHTML = html;
 }
-
-// 切换分类（修复了按钮高亮bug）
-function show(cate, btn) {
-  current = cate;
-  render();
-  document.querySelectorAll(".cate button").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-}
-
-// 初始化
-render();
 </script>
 </body>
+</html>
