@@ -159,7 +159,6 @@ const listEl = document.getElementById("list");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 
-// 状态标记
 let isSearchMode = false;
 
 function loadSub(main) {
@@ -180,7 +179,6 @@ function resetSub() {
   subEl.disabled = true;
 }
 
-// 正常分类渲染
 function renderByCate() {
   let data = [...files];
   const main = mainEl.value;
@@ -190,7 +188,6 @@ function renderByCate() {
   renderList(data);
 }
 
-// 搜索渲染
 function renderBySearch() {
   let data = [...files];
   const kw = searchInput.value.trim().toLowerCase();
@@ -202,7 +199,6 @@ function renderBySearch() {
   renderList(data);
 }
 
-// 渲染列表
 function renderList(data) {
   if (data.length === 0) {
     listEl.innerHTML = "<div class='empty'>暂无文件</div>";
@@ -220,25 +216,23 @@ function renderList(data) {
 }
 
 function bindEvent() {
-  // 主分类切换
   mainEl.addEventListener("change", () => {
     resetSub();
     loadSub(mainEl.value);
     if(!isSearchMode) renderByCate();
   });
-  // 子分类切换
+
   subEl.addEventListener("change", () => {
     if(!isSearchMode) renderByCate();
   });
 
-  // 搜索框聚焦：禁用分类
   searchInput.addEventListener("focus", () => {
     if(!isSearchMode){
         mainEl.disabled = true;
         subEl.disabled = true;
     }
   });
-  // 失去焦点：恢复分类
+
   searchInput.addEventListener("blur", () => {
     if(!isSearchMode){
         mainEl.disabled = false;
@@ -246,10 +240,8 @@ function bindEvent() {
     }
   });
 
-  // 按钮点击
   searchBtn.addEventListener("click", () => {
     if(!isSearchMode){
-        // 进入搜索模式
         isSearchMode = true;
         mainEl.disabled = true;
         subEl.disabled = true;
@@ -257,7 +249,9 @@ function bindEvent() {
         searchBtn.innerText = "返回";
         renderBySearch();
     }else{
-        // 返回正常模式
+        // 返回时清空搜索框
+        searchInput.value = "";
+        
         isSearchMode = false;
         searchBtn.classList.remove("back");
         searchBtn.innerText = "搜索";
@@ -267,7 +261,6 @@ function bindEvent() {
     }
   });
 
-  // 回车触发搜索
   searchInput.addEventListener("keyup", e => {
     if(e.key === "Enter" && !isSearchMode){
         searchBtn.click();
@@ -275,7 +268,6 @@ function bindEvent() {
   });
 }
 
-// 初始化
 bindEvent();
 renderByCate();
 </script>
