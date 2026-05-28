@@ -16,7 +16,7 @@
             margin:20px 0;
             flex-wrap:wrap;
             align-items:center;
-            justify-content: flex-start; /* 左对齐 */
+            justify-content: flex-start;
         }
         .select-item{
             display:flex;
@@ -76,6 +76,7 @@
             background:#218838;
         }
 
+        /* 布局优化：手机不挤、长文件名不乱 */
         .item{
             display:flex;
             justify-content:space-between;
@@ -83,7 +84,13 @@
             padding:12px;
             background:#f9f9f9;
             border-radius:8px;
-            margin:8px 0
+            margin:8px 0;
+            gap:12px;
+        }
+        .item > div:first-child {
+            flex: 1;
+            word-break: break-all;
+            line-height: 1.4;
         }
         .down{
             padding:6px 12px;
@@ -91,10 +98,32 @@
             color:#fff;
             border-radius:4px;
             text-decoration:none;
-            transition:0.2s
+            transition:0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .down:hover{background:#0056b3}
         .empty{text-align:center;color:#999;padding:30px}
+
+        /* 手机端完美适配 */
+        @media (max-width:600px) {
+            body{padding:10px;}
+            .box{padding:16px;}
+            .tool-group{
+                flex-direction:column;
+                align-items:stretch;
+            }
+            .select-item{
+                width:100%;
+            }
+            .select-item select{
+                flex:1;
+            }
+            .search-group{
+                max-width:100%;
+                margin-left:0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -102,7 +131,6 @@
     <h1>📁 阿秋的下载站</h1>
 
     <div class="tool-group">
-        <!-- 下载源：最左侧 + 默认选中123 -->
         <div class="select-item">
             <span class="label">下载源：</span>
             <select id="source">
