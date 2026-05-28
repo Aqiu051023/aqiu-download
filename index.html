@@ -159,10 +159,6 @@ const listEl = document.getElementById("list");
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 
-// 初始化
-render();
-bindEvent();
-
 // 绑定事件
 function bindEvent() {
   // 主分类切换
@@ -253,6 +249,10 @@ function render() {
   });
   listEl.innerHTML = html;
 }
+
+// 修复：先绑定事件再初始化渲染
+bindEvent();
+render();
 </script>
 </body>
 </html>
