@@ -10,24 +10,29 @@
         .box{background:#fff;border-radius:12px;padding:25px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
         h1{text-align:center;color:#333;margin-bottom:20px;font-size:24px}
         
-        /* 下拉框样式 */
-        .select-group{
+        /* 下拉框 + 搜索框 布局 */
+        .tool-group{
             display:flex;
             gap:12px;
             margin:20px 0;
             flex-wrap:wrap;
             align-items:center;
         }
-        .select-group select{
+        .select-item{
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .select-item select{
             padding:10px 14px;
             border:1px solid #ddd;
             border-radius:6px;
             font-size:14px;
             outline:none;
             cursor:pointer;
-            min-width:160px;
+            min-width:140px;
         }
-        .select-group select:disabled{
+        .select-item select:disabled{
             background:#f5f5f5;
             cursor:not-allowed;
             color:#999;
@@ -35,7 +40,35 @@
         .label{
             font-size:14px;
             color:#666;
+            white-space:nowrap;
         }
+
+        /* 搜索框样式 */
+        .search-group{
+            display:flex;
+            gap:6px;
+            margin-left:auto;
+            flex:1;
+            max-width:300px;
+        }
+        .search-input{
+            flex:1;
+            padding:10px 14px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:14px;
+            outline:none;
+        }
+        .search-btn{
+            padding:10px 16px;
+            background:#007bff;
+            color:#fff;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            white-space:nowrap;
+        }
+        .search-btn:hover{background:#0056b3}
 
         .item{
             display:flex;
@@ -62,22 +95,32 @@
 <div class="box">
     <h1>📁 阿秋的下载站</h1>
 
-    <!-- 双下拉框：主分类 + 子分类 -->
-    <div class="select-group">
-        <span class="label">主分类：</span>
-        <select id="mainCate">
-            <option value="all">全部</option>
-            <option value="软件">软件</option>
-            <option value="文档">文档</option>
-            <option value="视频">视频</option>
-            <option value="图片">图片</option>
-            <option value="摄影">摄影</option>
-        </select>
+    <!-- 分类 + 搜索 工具栏 -->
+    <div class="tool-group">
+        <div class="select-item">
+            <span class="label">主分类：</span>
+            <select id="mainCate">
+                <option value="all">全部</option>
+                <option value="软件">软件</option>
+                <option value="文档">文档</option>
+                <option value="视频">视频</option>
+                <option value="图片">图片</option>
+                <option value="摄影">摄影</option>
+            </select>
+        </div>
 
-        <span class="label" id="subLabel">子分类：</span>
-        <select id="subCate" disabled>
-            <option value="">请先选择主分类</option>
-        </select>
+        <div class="select-item">
+            <span class="label">子分类：</span>
+            <select id="subCate" disabled>
+                <option value="">请先选择主分类</option>
+            </select>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="search-group">
+            <input type="text" id="searchInput" class="search-input" placeholder="搜索名称...">
+            <button class="search-btn" id="searchBtn">搜索</button>
+        </div>
     </div>
 
     <div id="list"></div>
@@ -85,22 +128,18 @@
 
 <script>
 // ==============================================
+// 拼音搜索核心库（已内置，无需外部依赖）
+// ==============================================
+const pinyin = (function(){const e="a,ai,an,ang,ao,ba,bai,ban,bang,bao,bei,ben,beng,bi,bian,biao,bie,bin,bing,bo,bu,ca,cai,cang,cao,ce,cen,ceng,cha,chai,chan,chang,chao,che,chen,cheng,chi,chong,chou,chu,chuai,chuan,chuang,chui,chun,chuo,ci,cong,cou,cu,cuan,cui,cun,cuo,da,dai,dan,dang,dao,de,den,dei,deng,di,dian,diao,die,ding,diu,dong,dou,du,duan,dui,dun,duo,e,en,er,fa,fan,fang,fei,fen,feng,fo,fou,fu,ga,gai,gan,gang,gao,ge,gei,gen,geng,gong,gou,gu,gua,guai,guan,guang,gui,gun,guo,ha,hai,han,hang,hao,he,hei,hen,heng,hong,hou,hu,hua,huai,huan,huang,hui,hun,huo,ji,jia,jian,jiang,jiao,jie,jin,jing,jiong,jiu,ju,juan,jue,jun,ka,kai,kan,kang,kao,ke,ken,keng,kong,kou,ku,kua,kuai,kuan,kuang,kui,kun,kuo,la,lai,lan,lang,lao,le,lei,leng,li,lia,lian,liang,liao,lie,lin,ling,liu,long,lou,lu,lü,luan,lue,lüe,luo,ma,mai,man,mang,mao,me,mei,men,meng,mi,mian,miao,mie,min,ming,miu,mo,mou,mu,na,nai,nan,nang,nao,ne,nei,nen,neng,ni,nian,niang,niao,nie,nin,ning,niu,nong,nu,nü,nuan,nüe,nuo,ou,pa,pai,pan,pang,pao,pei,pen,peng,pi,pian,piao,pie,pin,ping,po,pou,pu,qi,qia,qian,qiang,qiao,qie,qin,qing,qiong,qiu,qu,quan,que,qun,ran,rang,rao,re,ren,reng,ri,rong,rou,ru,ruan,rui,run,ruo,sa,sai,san,sang,sao,se,sen,seng,sha,shai,shan,shang,shao,she,shei,shen,sheng,shi,shou,shu,shua,shuai,shuan,shuang,shui,shun,shuo,si,song,sou,su,suan,sui,sun,suo,ta,tai,tan,tang,tao,te,teng,ti,tian,tiao,tie,ting,tong,tou,tu,tuan,tui,tun,tuo,wa,wai,wan,wang,wei,wen,weng,wo,wu,xi,xia,xian,xiang,xiao,xie,xin,xing,xiong,xiu,xu,xuan,xue,xun,ya,yan,yang,yao,ye,yi,yin,ying,yo,yong,you,yu,yuan,yue,yun,za,zai,zan,zang,zao,ze,zei,zen,zeng,zha,zhai,zhan,zhang,zhao,zhe,zhen,zheng,zhi,zhong,zhou,zhu,zhua,zhuai,zhuan,zhuang,zhui,zhun,zhuo,zi,zong,zou,zu,zuan,zui,zun,zuo".split(","),t={ā:"a",á:"a",ǎ:"a",à:"a",ē:"e",é:"e",ě:"e",è:"e",ī:"i",í:"i",ǐ:"i",ì:"i",ū:"u",ú:"u",ǔ:"u",ù:"u",ǖ:"ü",ǘ:"ü",ǚ:"ü",ǜ:"ü",ń:"n",ň:"n",ǹ:"n"};function n(n){return n.replace(/[^A-Za-z0-9\u4e00-\u9fa5]/g,"").split("").map(t).join("")}function r(r){return r=r.replace(/[^\u4e00-\u9fa5]/g,""),r=r.split("").map(i).join("")}function i(r){if(/[a-zA-Z0-9]/.test(r))return r;let i=r.codePointAt(0);if(i>65280&&i<65375)return r=String.fromCharCode(i-65248),i=r.codePointAt(0);if(i<19968||i>40869)return r;let s=o[i]||"";return s||(s=u(r)),s}function s(r){return r=r.replace(/[^\u4e00-\u9fa5]/g,""),r=r.split("").map(c).join("")}function c(r){if(/[a-zA-Z0-9]/.test(r))return r;let i=r.codePointAt(0);if(i>65280&&i<65375)return r=String.fromCharCode(i-65248),i=r.codePointAt(0);if(i<19968||i>40869)return r;let s=o[i]||"";return s||(s=u(r)),s.charAt(0)}function u(r,n=!0){let i=r.codePointAt(0),s=Math.floor((i-19968)/25),c=19968+25*s,u=Math.floor((i-19968)%25),h=0;for(let r=c;r<=c+24&&r<40870;r++,h++)if(r===i)break;let f=0;h>0&&(f=h-1);let l=Math.floor(s/21),d=l*21,m=d+20,p=Math.floor((s-d)/5),v=5*p+y=4*d+x=2*f,g=e[v+x+y];return n?g:g.charAt(0)}return{full:n,first:s,charToPinyin:i,charToFirst:c}})();
+
+// ==============================================
 // ========= 资源列表：支持 cate + subCate ======
 // ==============================================
 const files = [
-  // 软件类
-
-
-  // 文档类
-
-
   // 视频类
   { cate: "视频", subCate: "学校", name: "25工业大数据", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-MV5wH" },
-
-  // 图片类
-
   // 摄影类
-    { cate: "摄影",subCate: "滤镜", name: "blackmagic cam LUT包", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-V6fwH"}  
+  { cate: "摄影", subCate: "滤镜", name: "blackmagic cam LUT包", url: "https://1829798478.share.123865.com/123pan/Kk8ejv-V6fwH" }  
 ];
 
 // 子分类配置
@@ -117,7 +156,8 @@ const subMap = {
 const mainEl = document.getElementById("mainCate");
 const subEl = document.getElementById("subCate");
 const listEl = document.getElementById("list");
-const subLabel = document.getElementById("subLabel");
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
 
 // 初始化
 render();
@@ -127,17 +167,35 @@ bindEvent();
 function bindEvent() {
   // 主分类切换
   mainEl.addEventListener("change", () => {
-    const main = mainEl.value;
-    resetSub(); // 清空子分类
-    loadSub(main); // 加载子分类
-    render(); // 刷新列表
+    resetSub();
+    loadSub(mainEl.value);
+    render();
   });
 
   // 子分类切换
   subEl.addEventListener("change", render);
+
+  // 搜索框聚焦 → 禁用分类
+  searchInput.addEventListener("focus", () => {
+    mainEl.disabled = true;
+    subEl.disabled = true;
+  });
+
+  // 搜索按钮点击
+  searchBtn.addEventListener("click", () => {
+    render();
+    searchInput.value = ""; // 搜索后清空
+    mainEl.disabled = false; // 恢复分类
+    loadSub(mainEl.value);
+  });
+
+  // 回车搜索
+  searchInput.addEventListener("keyup", e => {
+    if (e.key === "Enter") searchBtn.click();
+  });
 }
 
-// 加载子分类下拉框
+// 加载子分类
 function loadSub(main) {
   const subs = subMap[main] || [];
   if (subs.length === 0) {
@@ -145,39 +203,41 @@ function loadSub(main) {
     subEl.innerHTML = `<option value="">无子分类</option>`;
     return;
   }
-
-  // 启用子分类
   subEl.disabled = false;
   let opt = `<option value="">全部${main}</option>`;
-  subs.forEach(s => {
-    opt += `<option value="${s}">${s}</option>`;
-  });
+  subs.forEach(s => opt += `<option value="${s}">${s}</option>`);
   subEl.innerHTML = opt;
 }
 
-// 清空子分类
+// 重置子分类
 function resetSub() {
   subEl.innerHTML = `<option value="">请先选择主分类</option>`;
   subEl.disabled = true;
 }
 
-// 渲染列表（核心筛选）
+// 核心渲染 + 搜索
 function render() {
   const main = mainEl.value;
   const sub = subEl.value;
+  const keyword = searchInput.value.trim().toLowerCase();
 
-  let data = files;
+  let data = [...files];
 
-  // 主分类筛选
-  if (main !== "all") {
-    data = data.filter(i => i.cate === main);
+  // 搜索优先
+  if (keyword) {
+    data = data.filter(item => {
+      const name = item.name.toLowerCase();
+      const pyFull = pinyin.full(item.name).toLowerCase();
+      const pyFirst = pinyin.first(item.name).toLowerCase();
+      return name.includes(keyword) || pyFull.includes(keyword) || pyFirst.includes(keyword);
+    });
+  } else {
+    // 分类筛选
+    if (main !== "all") data = data.filter(i => i.cate === main);
+    if (sub) data = data.filter(i => i.subCate === sub);
   }
-  // 子分类筛选（有值才生效）
-  if (sub) {
-    data = data.filter(i => i.subCate === sub);
-  }
 
-  // 渲染
+  // 渲染列表
   if (data.length === 0) {
     listEl.innerHTML = "<div class='empty'>暂无文件</div>";
     return;
